@@ -1,6 +1,6 @@
 # Ostriker-Peebles Galaxy Stability Simulation
 
-A high-performance N-body simulation demonstrating the landmark 1973 discovery by Jeremiah Ostriker and Jim Peebles: **Galactic disks are inherently unstable without a massive, invisible Dark Matter halo.**
+An N-body simulation demonstrating the landmark 1973 discovery by Jeremiah Ostriker and Jim Peebles: **Galactic disks are inherently unstable without a massive, invisible Dark Matter halo.**
 
 ---
 
@@ -44,7 +44,7 @@ This project is a single-file, zero-dependency web application. It runs entirely
 
 ### Force Calculation
 - **Gravity**: Softened gravitational force to prevent singularities at *r* → 0.
-- **Dark Matter**: Modeled as a static external potential (Plummer Sphere) to maintain high performance.
+- **Dark Matter**: Modeled as a static external potential (Plummer Sphere).
 
 ### Initial Conditions
 - **Spatial**: Rejection sampling used to generate an exponential surface density profile (Σ(*r*) ∝ *e*<sup>-*r*/*R*<sub>d</sub></sup>).
@@ -52,15 +52,14 @@ This project is a single-file, zero-dependency web application. It runs entirely
 
 ---
 
-## 🖥️ Performance Optimization
+## 🖥️ Implementation Notes
 
-The simulation is computationally intensive (*N* = 3000 total particles requires ~9 million interactions per time step).
+The simulation uses *N* = 3000 particles (1,500 per galaxy), requiring ~9 million gravitational interactions per time step.
 
-To achieve 60 FPS in a browser environment, this implementation uses:
-
-- **Typed Arrays**: `Float32Array` is used for all physics calculations to ensure memory is laid out flat, mimicking low-level languages like C++.
-- **Memory Management**: All force vectors are pre-allocated to prevent "Garbage Collection" stuttering.
-- **Rendering**: Canvas API with additive blending for the "deep space" glow effect.
+Implementation details:
+- **Typed Arrays**: `Float32Array` for physics calculations.
+- **Memory Management**: Pre-allocated force arrays.
+- **Rendering**: Canvas API with additive blending.
 
 ---
 
@@ -86,5 +85,5 @@ This simulation is ideal for:
 - Public outreach events
 - Understanding the historical importance of dark matter discovery
 
-**Try it now**: Simply open `index.html` in your browser and watch galactic evolution unfold in real-time!
+Open `index.html` in your browser to run the simulation.
 
