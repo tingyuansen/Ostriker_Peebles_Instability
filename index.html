@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ostriker-Peebles Galaxy Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass: rgba(20, 20, 35, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #00f2ff;
+            --danger: #ff4d4d;
+            --success: #00ff9d;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #020204;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Deep Space Background Vignette */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+            z-index: -1;
+        }
+
+        /* UI Layer */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center; /* Centers the UI to avoid blocking side panels */
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        /* Glass Panel Header */
+        .header-panel {
+            pointer-events: auto;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            max-width: 500px;
+            text-align: center; /* Center text within the panel */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+        
+        .header-panel:hover {
+            transform: translateY(2px);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        h1 {
+            margin: 0;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+            font-size: 1.5rem;
+            background: linear-gradient(90deg, #fff, #aaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.4;
+        }
+
+        /* Stats Pill */
+        .stats-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
+        /* Bottom Controls */
+        .controls-dock {
+            pointer-events: auto;
+            align-self: center;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 10px;
+            border-radius: 24px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        button {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 16px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.2), rgba(0, 136, 255, 0.2));
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            color: var(--accent);
+        }
+
+        button.primary:hover {
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.4), rgba(0, 136, 255, 0.4));
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        /* Labels on Canvas */
+        .sim-labels {
+            position: absolute;
+            bottom: 120px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            pointer-events: none;
+        }
+
+        .label-box {
+            text-align: center;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .label-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .label-desc {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Canvas */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+        }
+        
+        /* SVG Icons */
+        .icon { width: 16px; height: 16px; fill: currentColor; }
+
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="header-panel">
+            <h1>Ostriker-Peebles Instability</h1>
+            <div class="subtitle">
+                A 1973 study revealed that galactic disks are naturally unstable. 
+                Without a massive invisible halo ("Dark Matter"), they violently buckle and form bars.
+            </div>
+            <div class="stats-pill">
+                <span id="time-display">T: 0.00</span>
+                <span style="opacity:0.3">|</span>
+                <span>1,500 Stars/Galaxy</span>
+            </div>
+        </div>
+
+        <div class="sim-labels">
+            <div class="label-box" style="color: var(--danger);">
+                <div class="label-title">DISK ONLY</div>
+                <div class="label-desc">Unstable: Forms Bar & Heats Up</div>
+            </div>
+            <div class="label-box" style="color: var(--success);">
+                <div class="label-title">WITH DARK MATTER</div>
+                <div class="label-desc">Stable: Remains Circular</div>
+            </div>
+        </div>
+
+        <div class="controls-dock">
+            <button onclick="resetSim()">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                Restart
+            </button>
+            <button class="primary" onclick="togglePause()" id="pause-btn">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                Pause
+            </button>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+<script>
+(function() {
+    // --- SETUP & CONFIG ---
+    if (window.simLoopId) cancelAnimationFrame(window.simLoopId);
+
+    const canvas = document.getElementById('simCanvas');
+    if (!canvas) {
+        console.error("Canvas not found");
+        return;
+    }
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    const N = 1500;
+    const G = 1.0;
+    const SOFTENING = 0.15;
+    const SOFT_SQ = SOFTENING * SOFTENING;
+    const DT = 0.01;
+    const HALO_MASS = 2.5;
+    const HALO_RADIUS = 1.5;
+    const HALO_RAD_SQ = HALO_RADIUS * HALO_RADIUS;
+
+    // Mouse Parallax State
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    // Utils
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    // --- PHYSICS ENGINE ---
+    class Galaxy {
+        constructor(n, useDarkMatter) {
+            this.n = n;
+            this.useDM = useDarkMatter;
+            this.x = new Float32Array(n);
+            this.y = new Float32Array(n);
+            this.vx = new Float32Array(n);
+            this.vy = new Float32Array(n);
+            
+            // Optimization: Pre-allocate force arrays to avoid GC stutter
+            this.fx = new Float32Array(n);
+            this.fy = new Float32Array(n);
+            
+            this.mass = 1.0 / n;
+            this.init();
+        }
+
+        init() {
+            let count = 0;
+            while (count < this.n) {
+                let px = rand(-3.5, 3.5);
+                let py = rand(-3.5, 3.5);
+                let r = Math.sqrt(px*px + py*py);
+                // Exponential disk profile
+                if (Math.random() < Math.exp(-r)) {
+                    this.x[count] = px;
+                    this.y[count] = py;
+                    count++;
+                }
+            }
+            this.initVelocities();
+        }
+
+        initVelocities() {
+            for (let i = 0; i < this.n; i++) {
+                let fx = 0, fy = 0;
+                let xi = this.x[i], yi = this.y[i];
+                
+                // Self Gravity
+                for (let j = 0; j < this.n; j+=2) { 
+                    if (i === j) continue;
+                    let dx = this.x[j] - xi;
+                    let dy = this.y[j] - yi;
+                    let d2 = dx*dx + dy*dy + SOFT_SQ;
+                    let f = (G * this.mass * 2) / Math.pow(d2, 1.5); 
+                    fx += f * dx;
+                    fy += f * dy;
+                }
+                
+                if (this.useDM) {
+                    let r2 = xi*xi + yi*yi;
+                    let f = -G * HALO_MASS / Math.pow(r2 + HALO_RAD_SQ, 1.5);
+                    fx += xi * f;
+                    fy += yi * f;
+                }
+                
+                let r = Math.sqrt(xi*xi + yi*yi);
+                if (r < 0.01) continue;
+                
+                let a_rad = Math.abs((fx * xi + fy * yi) / r);
+                let v = Math.sqrt(r * a_rad);
+                
+                // Counter-clockwise
+                this.vx[i] = (-yi / r) * v;
+                this.vy[i] = (xi / r) * v;
+            }
+        }
+
+        step() {
+            // Clear force arrays
+            this.fx.fill(0);
+            this.fy.fill(0);
+            
+            // Optimized O(N^2) loop
+            for (let i = 0; i < this.n; i++) {
+                let ax = 0, ay = 0;
+                const xi = this.x[i];
+                const yi = this.y[i];
+                
+                for (let j = 0; j < this.n; j++) {
+                    const dx = this.x[j] - xi;
+                    const dy = this.y[j] - yi;
+                    const d2 = dx*dx + dy*dy + SOFT_SQ;
+                    const inv = 1.0 / Math.pow(d2, 1.5);
+                    ax += dx * inv;
+                    ay += dy * inv;
+                }
+                this.fx[i] = ax * G * this.mass;
+                this.fy[i] = ay * G * this.mass;
+            }
+            
+            for (let i = 0; i < this.n; i++) {
+                if (this.useDM) {
+                    const xi = this.x[i], yi = this.y[i];
+                    const r2 = xi*xi + yi*yi;
+                    const f = -G * HALO_MASS / Math.pow(r2 + HALO_RAD_SQ, 1.5); 
+                    this.fx[i] += xi * f;
+                    this.fy[i] += yi * f;
+                }
+                this.vx[i] += this.fx[i] * DT;
+                this.vy[i] += this.fy[i] * DT;
+                this.x[i] += this.vx[i] * DT;
+                this.y[i] += this.vy[i] * DT;
+            }
+        }
+    }
+
+    // --- CONTROLLER ---
+    let simUnstable, simStable;
+    let time = 0;
+    let isPaused = false;
+
+    function resetSim() {
+        simUnstable = new Galaxy(N, false);
+        simStable = new Galaxy(N, true);
+        time = 0;
+        updateTimeDisplay();
+    }
+
+    function togglePause() {
+        isPaused = !isPaused;
+        const btn = document.getElementById('pause-btn');
+        btn.innerHTML = isPaused 
+            ? '<svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Resume'
+            : '<svg class="icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Pause';
+    }
+
+    function updateTimeDisplay() {
+        const el = document.getElementById('time-display');
+        if(el) el.innerText = `T: ${time.toFixed(2)}`;
+    }
+
+    window.resetSim = resetSim;
+    window.togglePause = togglePause;
+
+    // --- RENDERER ---
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    resetSim();
+
+    function loop() {
+        window.simLoopId = requestAnimationFrame(loop);
+
+        if (!isPaused) {
+            // Run physics (2 steps per frame)
+            simUnstable.step(); simUnstable.step();
+            simStable.step(); simStable.step();
+            time += DT * 2;
+            updateTimeDisplay();
+        }
+
+        // 1. Motion Blur / Trails
+        ctx.fillStyle = 'rgba(2, 2, 4, 0.25)'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Additive Blending for "Glow"
+        ctx.globalCompositeOperation = 'screen';
+
+        // Viewport Setup
+        const w = canvas.width;
+        const h = canvas.height;
+        const halfW = w / 2;
+        const scale = Math.min(halfW, h) / 9;
+        
+        // Parallax Offset (subtle)
+        const pxOff = (mouseX - w/2) * 0.02;
+        const pyOff = (mouseY - h/2) * 0.02;
+
+        // Helper to draw galaxy
+        function drawGalaxy(sim, centerX, centerY, colorBase) {
+            for (let i = 0; i < N; i++) {
+                const x = centerX + sim.x[i] * scale + pxOff;
+                const y = centerY + sim.y[i] * scale + pyOff;
+
+                // Color based on velocity (Heat map)
+                const speed = Math.sqrt(sim.vx[i]**2 + sim.vy[i]**2);
+                const heat = Math.min(speed / 1.5, 1.0); 
+                
+                // Dynamic Color
+                let r, g, b;
+                if (colorBase === 'red') {
+                     // Unstable
+                     r = 50 + heat * 200;
+                     g = 200 - heat * 100;
+                     b = 255 - heat * 200;
+                } else {
+                     // Stable
+                     r = 20 + heat * 100;
+                     g = 100 + heat * 155;
+                     b = 255;
+                }
+
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.6 + heat * 0.4})`;
+                
+                const size = 1.0 + heat * 1.5;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Draw Left (Unstable)
+        drawGalaxy(simUnstable, halfW / 2, h / 2, 'red');
+
+        // Draw Right (Stable)
+        drawGalaxy(simStable, halfW * 1.5, h / 2, 'blue');
+
+        // 3. Reset Blend Mode for UI elements
+        ctx.globalCompositeOperation = 'source-over';
+        
+        // Draw Divider
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(halfW, 50);
+        ctx.lineTo(halfW, h - 50);
+        ctx.stroke();
+    }
+
+    loop();
+})();
+</script>
+</body>
+</html>
