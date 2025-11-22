@@ -30,7 +30,7 @@ This project is a single-file, zero-dependency web application. It runs entirely
 
 ### Controls
 
-- **Restart**: Resets the simulation to time *t* = 0.
+- **Restart**: Resets the simulation to time $t = 0$.
 - **Pause**: Freezes the simulation for closer inspection.
 - **Parallax**: Move your mouse around the screen to shift the 3D perspective.
 
@@ -39,22 +39,22 @@ This project is a single-file, zero-dependency web application. It runs entirely
 ## ⚙️ Technical Details
 
 ### Physics Engine
-- Direct summation N-body integrator (*O*(*N*²) complexity).
+- Direct summation N-body integrator ($\mathcal{O}(N^2)$ complexity).
 - **Integrator**: Semi-implicit Euler / Leapfrog (Symplectic) for energy conservation.
 
 ### Force Calculation
-- **Gravity**: Softened gravitational force to prevent singularities at *r* → 0.
+- **Gravity**: Softened gravitational force to prevent singularities at $r \to 0$.
 - **Dark Matter**: Modeled as a static external potential (Plummer Sphere).
 
 ### Initial Conditions
-- **Spatial**: Rejection sampling used to generate an exponential surface density profile (Σ(*r*) ∝ *e*<sup>-*r*/*R*<sub>d</sub></sup>).
+- **Spatial**: Rejection sampling used to generate an exponential surface density profile ($\Sigma(r) \propto e^{-r/R_d}$).
 - **Velocity**: Particles are initialized in circular orbits based on the enclosed mass (baryonic + dark matter) to start in equilibrium.
 
 ---
 
 ## 🖥️ Implementation Notes
 
-The simulation uses *N* = 3000 particles (1,500 per galaxy), requiring ~9 million gravitational interactions per time step.
+The simulation uses $N = 3000$ particles (1,500 per galaxy), requiring ~9 million gravitational interactions per time step.
 
 Implementation details:
 - **Typed Arrays**: `Float32Array` for physics calculations.
